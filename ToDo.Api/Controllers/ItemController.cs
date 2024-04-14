@@ -33,6 +33,18 @@ namespace ToDoApp.Api.Controllers
         }
 
         /// <summary>
+        /// Get list of items
+        /// </summary>
+        /// <returns>Retrieves a list of items.</returns>
+        [HttpGet("feed-list")]
+        [ProducesResponseType(typeof(IEnumerable<CloudEvent>), 200)]
+        public async Task<IActionResult> GetListFeed([FromQuery]Guid? lastEventId, [FromQuery]int? timeout)
+        {
+            var list = await _itemService.GetItemsFeedList(lastEventId, timeout);
+            return Ok(list);
+        }
+
+        /// <summary>
         /// Add new item
         /// </summary>
         /// <returns>Returns id of added item</returns>

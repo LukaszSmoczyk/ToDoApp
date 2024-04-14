@@ -9,11 +9,11 @@ using ToDoApp.Data.Repositories.Interfaces;
 
 namespace ToDoApp.Data.Repositories
 {
-    public class ItemRepository : BaseRepository<Item, int>, IItemRepository
+    public class FeedRepository : BaseRepository<Feed, int>, IFeedRepository
     {
-        public ItemRepository(DataContext context) : base(context)
+        public FeedRepository(DataContext context) : base(context)
         {
-            
+
         }
     }
 }

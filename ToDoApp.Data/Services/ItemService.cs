@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,9 +15,11 @@ namespace ToDoApp.Data.Services
     public class ItemService : IItemService
     {
         private readonly IItemRepository _itemRepository;
-        public ItemService(IItemRepository itemRepository)
+        private readonly IFeedRepository _feedRepository;
+        public ItemService(IItemRepository itemRepository, IFeedRepository feedRepository)
         {
             _itemRepository = itemRepository;
+            _feedRepository = feedRepository;
         }
 
         public async Task<int> AddItem(CreateItemRequest request)
@@ -25,7 +28,8 @@ namespace ToDoApp.Data.Services
             {
                 Quantity = request.Quantity,
                 Name = request.Name,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
             };
 
             var itemDb = await _itemRepository.Add(newItem);
@@ -64,6 +68,66 @@ namespace ToDoApp.Data.Services
                 };
                 return itemDto;
             }
+        }
+
+        public async Task<List<CloudEvent>> GetItemsFeedList(Guid? lastEventId, int? timeout)
+        {
+            var cloudEvents = new List<CloudEvent>();
+            var feed = await _feedRepository
+                .Find()
+                .Where(n => n.Name.Equals("feed-list"))
+                .FirstOrDefaultAsync();
+
+            //First iteration
+            if (feed == null && lastEventId == null)
+            {
+                var guid = Guid.NewGuid();
+                feed = new Feed()
+                {
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    Name = "feed-list",
+                    EventId = guid,
+                };
+                await _feedRepository.Add(feed);
+
+                var items = await _itemRepository
+                    .Find()
+                    .OrderBy(i => i.UpdatedAt)
+                    .ToListAsync();
+
+                foreach(var item in items)
+                {
+                    bool isLastItem = item.Equals(items.Last());
+                    var id = Guid.NewGuid();
+                    if (isLastItem)
+                    {
+                        id = guid;
+                    }
+                    cloudEvents.Add(new CloudEvent()
+                    {
+                        SpecVersion = "1.0",
+                        Type = "org.http-feeds.example.items",
+                        Source = "https://example.http-feeds.org/items",
+                        Time = DateTime.UtcNow,
+                        Data = item,
+                        Id = id
+                    });
+                }
+
+                return cloudEvents;
+            }
+            else
+            {
+                if (feed.EventId.Equals(lastEventId))
+                {
+                    var guid = Guid.NewGuid();
+                }
+            }
+
+
+            return null;
+
         }
 
         public async Task<List<ItemDTO>> GetItemsList()

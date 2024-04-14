@@ -6,18 +6,16 @@ using System.Text;
 using System.Threading.Tasks;
 using ToDoApp.Data.Models;
 
-namespace ToDoApp.Data.DataContext
+namespace ToDoApp.Data.Context
 {
-    public class ToDoDataContext : DbContext
+    public class DataContext : DbContext
     {
-        public ToDoDataContext(DbContextOptions<ToDoDataContext> options) : base(options)
+        public DataContext(DbContextOptions<DataContext> options) : base(options)
         {
         }
 
         public DbSet<Item> Items { get; set; }
+        public DbSet<Feed> Feeds { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-        }
     }
 }

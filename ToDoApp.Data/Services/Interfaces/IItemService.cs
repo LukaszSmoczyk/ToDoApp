@@ -14,6 +14,7 @@ namespace ToDoApp.Data.Services.Interfaces
     {
         public Task<int> AddItem(CreateItemRequest request);
         public Task<List<ItemDTO>> GetItemsList();
+        public Task<List<CloudEvent>> GetItemsFeedList(Guid? lastEventId, int? timeout);
         public Task<ItemDTO> GetItemById(int id);
         public Task<Item> UpdateItem(ItemDTO item);
         public Task<bool> DeleteItem(int id);

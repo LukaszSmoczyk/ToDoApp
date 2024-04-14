@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ToDoApp.Data.DataContext;
+using ToDoApp.Data.Context;
 using ToDoApp.Data.Models;
 using ToDoApp.Data.Repositories.Interfaces;
 
@@ -12,10 +12,10 @@ namespace ToDoApp.Data.Repositories
 {
     public abstract class BaseRepository<T, K> : IBaseRepository<T, K> where T : BaseEntity
     {
-        protected ToDoDataContext context;
+        protected DataContext context;
         protected DbSet<T> _dbSet;
 
-        public BaseRepository(ToDoDataContext context)
+        public BaseRepository(DataContext context)
         {
             this.context = context;
             _dbSet = this.context.Set<T>();
