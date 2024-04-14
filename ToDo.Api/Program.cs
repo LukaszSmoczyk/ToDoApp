@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using ToDoApp.Data.DataContext;
+using ToDoApp.Data.Models;
+using ToDoApp.Data.Repositories;
+using ToDoApp.Data.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,9 +13,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddScoped<IItemRepository, ItemRepository>();
 var appSettingsSection = builder.Configuration.GetSection("AppSettings");
 var connectionString = builder.Configuration.GetConnectionString("ToDoDb");
-builder.Services.AddDbContext<DataContext>(options => options.UseSqlServer(connectionString),ServiceLifetime.Scoped);
+builder.Services.AddDbContext<ToDoDataContext>(options => options.UseSqlServer(connectionString),ServiceLifetime.Scoped);
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -10,7 +10,7 @@ using ToDoApp.Data.DataContext;
 
 namespace ToDoApp.Data.Migrations
 {
-    [DbContext(typeof(Data.DataContext.DataContext))]
+    [DbContext(typeof(Data.DataContext.ToDoDataContext))]
     [Migration("20240414151840_FirstMigration")]
     partial class FirstMigration
     {

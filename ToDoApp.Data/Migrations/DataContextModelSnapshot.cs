@@ -9,7 +9,7 @@ using ToDoApp.Data.DataContext;
 
 namespace ToDoApp.Data.Migrations
 {
-    [DbContext(typeof(Data.DataContext.DataContext))]
+    [DbContext(typeof(Data.DataContext.ToDoDataContext))]
     partial class DataContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

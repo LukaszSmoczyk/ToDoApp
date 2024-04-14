@@ -8,9 +8,9 @@ using ToDoApp.Data.Models;
 
 namespace ToDoApp.Data.DataContext
 {
-    public class DataContext : DbContext
+    public class ToDoDataContext : DbContext
     {
-        public DataContext(DbContextOptions<DataContext> options) : base(options)
+        public ToDoDataContext(DbContextOptions<ToDoDataContext> options) : base(options)
         {
         }
 
