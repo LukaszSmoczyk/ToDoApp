@@ -23,7 +23,7 @@ namespace ToDoApp.Data.Repositories
 
         public virtual async Task<T> Add(T entity)
         {
-            _dbSet.Add(entity);
+            await _dbSet.AddAsync(entity);
             await context.SaveChangesAsync();
             return entity;
         }
@@ -59,6 +59,7 @@ namespace ToDoApp.Data.Repositories
             await context.SaveChangesAsync();
             return entity;
         }
+
         public virtual IQueryable<T> Find()
         {
             return _dbSet;
