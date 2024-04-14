@@ -1,3 +1,6 @@
+using Microsoft.EntityFrameworkCore;
+using ToDoApp.Data.DataContext;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -7,6 +10,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+var appSettingsSection = builder.Configuration.GetSection("AppSettings");
+var connectionString = builder.Configuration.GetConnectionString("ToDoDb");
+builder.Services.AddDbContext<DataContext>(options => options.UseSqlServer(connectionString),ServiceLifetime.Scoped);
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
