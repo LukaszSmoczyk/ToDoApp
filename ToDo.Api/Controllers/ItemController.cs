@@ -2,6 +2,7 @@
 using Swashbuckle.AspNetCore.Annotations;
 using System.Collections.Generic;
 using ToDoApp.Data.DTO;
+using ToDoApp.Data.Exceptions;
 using ToDoApp.Data.Models;
 using ToDoApp.Data.Repositories.Interfaces;
 using ToDoApp.Data.Requests;
@@ -38,10 +39,34 @@ namespace ToDoApp.Api.Controllers
         /// <returns>Retrieves a list of items.</returns>
         [HttpGet("feed-list")]
         [ProducesResponseType(typeof(IEnumerable<CloudEvent>), 200)]
-        public async Task<IActionResult> GetListFeed([FromQuery]Guid? lastEventId, [FromQuery]int? timeout)
+        [ProducesResponseType(204)]
+        [ProducesResponseType(typeof(string), 404)]
+        public async Task<IActionResult> GetListFeed([FromQuery]Guid? lastEventId, [FromQuery]int? timeout, CancellationToken userCt)
         {
-            var list = await _itemService.GetItemsFeedList(lastEventId, timeout);
-            return Ok(list);
+            try
+            {
+                var cts = CancellationTokenSource.CreateLinkedTokenSource(userCt);
+                cts.CancelAfter(TimeSpan.FromSeconds(30));
+                await Task.Delay(5000, userCt);
+                var list = await _itemService.GetItemsFeedList(lastEventId, timeout);
+
+                if (list != null)
+                {
+                    return Ok(list);
+                }
+                else
+                {
+                    return NoContent();
+                }
+            }
+            catch (EventIdNotFoundException ex)
+            {
+                return NotFound($"Provided lastEventId: {lastEventId} was not found");
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
         /// <summary>

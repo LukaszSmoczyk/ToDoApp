@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ToDoApp.Data.DTO;
+using ToDoApp.Data.Exceptions;
 using ToDoApp.Data.Models;
 using ToDoApp.Data.Repositories.Interfaces;
 using ToDoApp.Data.Requests;
@@ -70,63 +71,93 @@ namespace ToDoApp.Data.Services
             }
         }
 
-        public async Task<List<CloudEvent>> GetItemsFeedList(Guid? lastEventId, int? timeout)
+        public async Task<List<CloudEvent>?> GetItemsFeedList(Guid? lastEventId, int? timeout)
         {
-            var cloudEvents = new List<CloudEvent>();
+            var cloudEventsList = new List<CloudEvent>();
+            var itemsList = new List<Item>();
+            var guid = Guid.NewGuid();
+
             var feed = await _feedRepository
                 .Find()
-                .Where(n => n.Name.Equals("feed-list"))
+                .Where(n => n.Name.Equals("feed-item-list"))
                 .FirstOrDefaultAsync();
 
             //First iteration
-            if (feed == null && lastEventId == null)
+            if (feed == null)
             {
-                var guid = Guid.NewGuid();
                 feed = new Feed()
                 {
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now,
-                    Name = "feed-list",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    Name = "feed-item-list",
                     EventId = guid,
                 };
                 await _feedRepository.Add(feed);
+            }
 
-                var items = await _itemRepository
+            if (!lastEventId.HasValue)
+            {
+                itemsList = await _itemRepository
                     .Find()
                     .OrderBy(i => i.UpdatedAt)
                     .ToListAsync();
-
-                foreach(var item in items)
-                {
-                    bool isLastItem = item.Equals(items.Last());
-                    var id = Guid.NewGuid();
-                    if (isLastItem)
-                    {
-                        id = guid;
-                    }
-                    cloudEvents.Add(new CloudEvent()
-                    {
-                        SpecVersion = "1.0",
-                        Type = "org.http-feeds.example.items",
-                        Source = "https://example.http-feeds.org/items",
-                        Time = DateTime.UtcNow,
-                        Data = item,
-                        Id = id
-                    });
-                }
-
-                return cloudEvents;
             }
             else
             {
-                if (feed.EventId.Equals(lastEventId))
+                if (!lastEventId.Equals(feed.EventId))
                 {
-                    var guid = Guid.NewGuid();
+                    throw new EventIdNotFoundException();
+                }
+
+                itemsList = await _itemRepository
+                      .Find()
+                      .Where(i => i.UpdatedAt >= feed.UpdatedAt)
+                      .OrderBy(i => i.UpdatedAt)
+                      .ToListAsync();
+            }
+
+            if (!(itemsList.Count > 0))
+            {
+                if (timeout.HasValue && timeout > 0)
+                {
+                    if (timeout > 10000)
+                        timeout = 10000; //Safeguard just in case
+                    await Task.Delay(timeout.Value);
+                    itemsList = await _itemRepository
+                        .Find()
+                        .OrderBy(i => i.UpdatedAt)
+                        .ToListAsync();
+                }
+                // If still no items, return null
+                if (!(itemsList.Count > 0))
+                {
+                    return null;
                 }
             }
 
+            foreach(var item in itemsList)
+            {
+                bool isLastItem = item.Equals(itemsList.Last());
+                var id = Guid.NewGuid();
+                if (isLastItem)
+                {
+                    id = guid;
+                }
+                cloudEventsList.Add(new CloudEvent()
+                {
+                    SpecVersion = "1.0",
+                    Type = "org.http-feeds.example.items",
+                    Source = "https://example.http-feeds.org/items",
+                    Time = DateTime.UtcNow,
+                    Data = item,
+                    Id = id
+                });
+            }
 
-            return null;
+            feed.UpdatedAt = DateTime.UtcNow;
+            feed.EventId = guid;
+            await _feedRepository.Update(feed);
+            return cloudEventsList;
 
         }
 
@@ -164,7 +195,7 @@ namespace ToDoApp.Data.Services
                 return null;
             }
 
-            itemDb.UpdatedAt = DateTime.Now;
+            itemDb.UpdatedAt = DateTime.UtcNow;
             itemDb.Quantity = item.Quantity;
             itemDb.Name = item.Name;
             var updatedItem = await _itemRepository.Update(itemDb);
